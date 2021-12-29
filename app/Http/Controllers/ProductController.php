@@ -4,12 +4,38 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Product::all();
+        $sort = json_decode($request->input('sort'));
+        $range = json_decode($request->input('range'));
+        $filter = json_decode($request->input('filter'));
+        $numProducts = $range[1]-$range[0]+1;
+        $totalProducts = DB::table('products')->count();
+        if(is_null($range)){
+            if(strcmp($sort[1],"ASC") == 0){
+                $products = Product::orderBy($sort[0])->get();
+            }
+            else{
+                $products = Product::orderByDesc($sort[0])->get();
+            }
+        }
+        else{
+            if(strcmp($sort[1],"ASC") == 0){
+                $products = Product::orderBy($sort[0])->skip($range[0])->take($numProducts)->get();
+            }
+            else{
+                $products = Product::orderByDesc($sort[0])->skip($range[0])->take($numProducts)->get();
+            }
+        }
+        $response = response()->json($products,200);
+        $response->header('Content-Range',"posts 0-".$numProducts."/".$totalProducts);
+        $response->header('Access-Control-Expose-Headers','Content-Range');
+        return $response;
     }
 
     public function show(Product $product)

@@ -17,7 +17,8 @@ class AddContentRange
     public function handle(Request $request, Closure $next)
     {
         $response = $next($request);
-        $response->header('Content-Range','posts 0-20/20');
+        $size = count(json_decode($response->getContent()));
+        $response->header('Content-Range',"posts 0-".$size."/".$size);
         $response->header('Access-Control-Expose-Headers','Content-Range');
         return $response;
     }
